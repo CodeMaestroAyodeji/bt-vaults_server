@@ -1,11 +1,13 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const pool = require("../config/db");
-const crypto = require("crypto");
-const { sendVerificationEmail, sendPasswordResetSuccessEmail, sendVerificationSuccessEmail, sendResetPasswordEmail, sendEmail } = require("../utils/emailService");
-require("dotenv").config();
+// controllers/authController.js
 
-const signup = async (req, res) => {
+// const bcrypt = require("bcryptjs");
+// const jwt = require("jsonwebtoken");
+// const pool = require("../config/db");
+// const crypto = require("crypto");
+// const { sendVerificationEmail, sendPasswordResetSuccessEmail, sendVerificationSuccessEmail, sendResetPasswordEmail } = require("../utils/emailService");
+// require("dotenv").config();
+
+const userSignup = async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
@@ -42,7 +44,7 @@ const signup = async (req, res) => {
   }
 };
 
-const login = async (req, res) => {
+const userLogin = async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -128,36 +130,37 @@ const forgotPassword = async (req, res) => {
     }
   };
 
-const resetPassword = async (req, res) => {
-  const { token, newPassword } = req.body;
+  const resetPassword = async (req, res) => {
+    const { token, newPassword } = req.body;
 
-  try {
-    const [user] = await pool.query(
-      "SELECT * FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()",
-      [token]
-    );
+    try {
+        // Query to find user with the given reset token and check if it's not expired
+        const [rows] = await pool.query("SELECT * FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()", [token]);
 
-    if (user.length === 0) {
-      return res.status(400).json({ message: "Invalid or expired token" });
+        // Check if the token is valid or expired
+        if (!rows || rows.length === 0) {
+            return res.status(400).json({ message: "Invalid or expired token." });
+        }
+
+        const user = rows[0];
+
+        // Hash the new password before saving
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update the user's password and clear the reset token and expiry
+        await pool.query("UPDATE users SET password = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?", [hashedPassword, user.id]);
+
+        // Send success email notification
+        await sendPasswordResetSuccessEmail(user.email);
+
+        // Respond with success message
+        return res.status(200).json({ message: "Password reset successfully." });
+    } catch (error) {
+        console.error("Error resetting password:", error);
+        return res.status(500).json({ message: "Internal server error." });
     }
-
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Update password and clear reset token
-    await pool.query(
-      "UPDATE users SET password = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?",
-      [hashedPassword, user[0].id]
-    );
-
-    // Send password reset success email
-    await sendPasswordResetSuccessEmail(user[0].email);
-
-    res.status(200).json({ message: "Password reset successfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
-  }
 };
 
-module.exports = { signup, login, verifyEmail, forgotPassword, resetPassword, sendEmail };
+  
+  module.exports = { userSignup, userLogin, verifyEmail, forgotPassword, resetPassword };
+  

@@ -1,6 +1,9 @@
+// utils/emailService.js
+
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
+const FRONTEND_URL = process.env.FRONTEND_URL;
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -22,6 +25,8 @@ const sendEmail = async (to, subject, htmlContent) => {
 };
 
 // Email Templates
+
+// Verification Email
 const sendVerificationEmail = async (email, verificationCode) => {
   const htmlContent = `
     <h1>Welcome to Bt-Vaults</h1>
@@ -32,16 +37,19 @@ const sendVerificationEmail = async (email, verificationCode) => {
   await sendEmail(email, 'Email Verification - Bt-Vaults', htmlContent);
 };
 
+// Email Verified Success
 const sendVerificationSuccessEmail = async (email) => {
   const htmlContent = `
     <h1>Email Verified Successfully</h1>
     <p>Your email has been verified. You can now log in to your account.</p>
-    <a href="http://localhost:5000/login">Login Here</a>
+    <a href="${FRONTEND_URL}/bt-vaults/login">Login Here</a>
   `;
   await sendEmail(email, 'Email Verified - Bt-Vaults', htmlContent);
 };
 
-const sendResetPasswordEmail = async (email, resetUrl) => {
+// Password Reset Email
+const sendResetPasswordEmail = async (email, resetToken) => {
+  const resetUrl = `${FRONTEND_URL}/bt-vaults/reset-password?token=${resetToken}`;
   const htmlContent = `
     <h1>Password Reset Request</h1>
     <p>You requested to reset your password. Click the link below to proceed:</p>
@@ -51,17 +59,27 @@ const sendResetPasswordEmail = async (email, resetUrl) => {
   await sendEmail(email, 'Password Reset - Bt-Vaults', htmlContent);
 };
 
+// const sendResetPasswordEmail = async (email, resetToken) => {
+//   const subject = 'Password Reset Request';
+//   const text = `To reset your password, use the following token: ${resetToken}`;
+  // Add your email sending logic here
+// };
+
+// Password Reset Success Email
 const sendPasswordResetSuccessEmail = async (email) => {
   const htmlContent = `
     <h1>Password Reset Successful</h1>
     <p>Your password has been successfully reset. You can now log in using your new password.</p>
-    <a href="http://localhost:5000/login">Login Here</a>
+    <a href="${FRONTEND_URL}/bt-vaults/login">Login Here</a>
   `;
   await sendEmail(email, 'Password Reset Successful - Bt-Vaults', htmlContent);
 };
 
+
+
+// Export the functions
 module.exports = {
-    sendEmail,
+  sendEmail,
   sendVerificationEmail,
   sendVerificationSuccessEmail,
   sendResetPasswordEmail,
