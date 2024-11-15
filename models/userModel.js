@@ -12,17 +12,15 @@ const createUser = async (userData) => {
     await db.execute(query, [name, email, password, isAdmin, verificationCode]);
   } catch (error) {
     console.error('Database error:', error.message);
-    throw new Error('Database query failed.');
+    throw new Error('Failed to create user.');
   }
 };
 
 
 const findUserByEmail = async (email) => {
-  const [rows] = await db.execute(`SELECT * FROM users WHERE email = ?`, [email]);
-  if (rows.length === 0) throw new Error('User not found.');
-  
-  console.log("User data fetched:", rows[0]); // Log user data to verify reset_token and reset_token_expiry
-  return rows[0];
+  const [rows] = await db.execute(`SELECT * FROM users WHERE email = ?`, [email]);  
+  console.log("User data fetched:", rows[0]);
+  return rows.length === 0 ? null : rows[0];
 };
 
 

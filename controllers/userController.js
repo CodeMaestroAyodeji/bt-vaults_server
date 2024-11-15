@@ -7,7 +7,14 @@ const emailService = require('../utils/emailService');
 
 
 const userSignup = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, isAdmin } = req.body;
+
+   // Check if user already exists
+   const existingUser = await userModel.findUserByEmail(email);
+   if (existingUser) {
+     return res.status(400).json({ message: 'Email already registered. Please log in.' });
+   }
+
   const hashedPassword = await bcrypt.hash(password, 10);
   const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -17,10 +24,12 @@ const userSignup = async (req, res) => {
       email,
       password: hashedPassword,
       verificationCode,
-      isAdmin: false,
+      isAdmin,
     });
+
     await emailService.sendVerificationEmail(email, verificationCode);
     res.status(201).json({ message: 'Signup successful. Please verify your email.' });
+    
   } catch (error) {
     console.error('Signup error:', error);
     res.status(500).json({ message: 'User signup failed.', error: error.message });
