@@ -38,18 +38,33 @@ const userSignup = async (req, res) => {
 
 
 const userLogin = async (req, res) => {
-  const { email, password } = req.body;
-  const user = await userModel.findUserByEmail(email);
+  try {
+    const { email, password } = req.body;
+    const user = await userModel.findUserByEmail(email);
 
-  if (!user || user.is_admin) return res.status(403).json({ message: 'Invalid credentials.' });
-  if (!user.is_verified) return res.status(400).json({ message: 'Email is not verified.' });
+    if (!user) return res.status(403).json({ message: 'User not found.' });
+    if (!user.is_verified) return res.status(400).json({ message: 'Please verify your email before logging in.' });
 
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) return res.status(401).json({ message: 'Invalid password.' });
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) return res.status(401).json({ message: 'Invalid password.' });
 
-  const token = jwt.sign({ userId: user.id, isAdmin: user.is_admin }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  res.json({ message: 'Login successful.', token });
+    const token = jwt.sign({ userId: user.id, isAdmin: user.is_admin }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({
+      message: 'Login successful.',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.is_admin,
+      },
+    });
+  } catch (error) {
+    console.error('Login error:', error.message);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
 };
+
 
 const verifyEmail = async (req, res) => {
   const { email, verificationCode } = req.body;
@@ -94,36 +109,30 @@ const forgotPassword = async (req, res) => {
 
 
 const resetPassword = async (req, res) => {
-  console.log("Request body:", req.body); // Logs incoming request data
-  const { email, token, newPassword } = req.body;
-
-  // Check if all parameters are present
-  if (!email || !token || !newPassword) {
-    console.error("Missing parameters:", { email, token, newPassword });
-    return res.status(400).json({ message: 'Missing required parameters.' });
-  }
+  const { token, newPassword } = req.body;
 
   try {
-    const user = await userModel.findUserByEmail(email);
-    if (!user) return res.status(404).json({ message: 'User not found.' });
+    // Find user by token
+    const user = await userModel.findUserByToken(token);
+    if (!user) {
+      return res.status(404).json({ message: 'Invalid or expired token.' });
+    }
 
-    // Convert the reset token expiry to a Date object and check if it's expired
+    // Check if the token has expired
     const resetTokenExpiry = new Date(user.reset_token_expiry).getTime();
-    const currentTime = Date.now();
-
-    // If the reset token does not match or is expired, return error
-    if (user.reset_token !== token || currentTime > resetTokenExpiry) {
-      console.error('Invalid or expired reset token.');
-      return res.status(400).json({ message: 'Invalid or expired reset token.' });
+    if (Date.now() > resetTokenExpiry) {
+      return res.status(400).json({ message: 'Token has expired.' });
     }
 
     // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update the password in the database
-    await userModel.updatePassword(email, hashedPassword);
-    await userModel.updatePassword(email, hashedPassword);
-    await emailService.sendPasswordResetSuccessEmail(email);  // Optional: Send admin-specific reset success email
+    // Update password and clear reset token
+    await userModel.updatePassword(user.email, hashedPassword);
+    await userModel.clearResetToken(user.email);
+
+    // Notify the user
+    await emailService.sendPasswordResetSuccessEmail(user.email);
 
     res.json({ message: 'Password reset successful.' });
   } catch (error) {
@@ -131,6 +140,7 @@ const resetPassword = async (req, res) => {
     res.status(500).json({ message: 'Password reset failed.' });
   }
 };
+
 
 module.exports = {
   userSignup,

@@ -37,11 +37,25 @@ const updateResetToken = async (email, resetToken, resetTokenExpiry) => {
 };
 
 
+const findUserByToken = async (token) => {
+  const [rows] = await db.query('SELECT * FROM users WHERE reset_token = ?', [token]);
+  return rows.length > 0 ? rows[0] : null;
+};
+
+const findAdminByToken = async (token) => {
+  const [rows] = await db.query('SELECT * FROM users WHERE reset_token = ? AND is_admin = 1', [token]);
+  return rows.length > 0 ? rows[0] : null;
+};
+
 const updatePassword = async (email, hashedPassword) => {
-  const query = `
-     UPDATE users SET password = ?, reset_token = NULL, reset_token_expiry = NULL WHERE email = ?
-  `;
-  await db.execute(query, [hashedPassword, email]);
+  await db.query(
+    'UPDATE users SET password = ?, reset_token = NULL, reset_token_expiry = NULL WHERE email = ?',
+    [hashedPassword, email]
+  );
+};
+
+const clearResetToken = async (email) => {
+  await db.query('UPDATE users SET reset_token = NULL, reset_token_expiry = NULL WHERE email = ?', [email]);
 };
 
 
@@ -51,5 +65,8 @@ module.exports = {
   findUserByEmail,
   verifyUser,
   updateResetToken,
-  updatePassword,
+  findUserByToken, 
+  findAdminByToken, 
+  updatePassword, 
+  clearResetToken,
 };
