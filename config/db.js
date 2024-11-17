@@ -1,30 +1,26 @@
 // config/db.js
 
-const mysql = require('mysql2/promise');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 20000,
+        });
+
+        console.log("✅ Connected to MongoDB successfully");
+    } catch (error) {
+        console.error("❌ Error connecting to MongoDB:", error.message);
+        process.exit(1);
+    }
+};
+
+// Listen for connection errors after initial connection
+mongoose.connection.on('error', (err) => {
+    console.error("MongoDB connection error:", err.message);
 });
 
-// Test the connection and log a message
-(async () => {
-  try {
-    // Attempt to get a connection from the pool
-    const connection = await pool.getConnection();
-    console.log("Connected to the bt-vault Database");
-    
-    // Release the connection back to the pool
-    connection.release();
-  } catch (error) {
-    console.error("Error connecting to the bt-vault Database:", error);
-  }
-})();
-
-module.exports = pool;
+module.exports = connectDB;
