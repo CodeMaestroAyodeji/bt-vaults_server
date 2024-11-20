@@ -1,3 +1,5 @@
+// models/userModel.js
+
 const mongoose = require('mongoose');
 
 // Define the User Schema
@@ -14,6 +16,11 @@ const userSchema = new mongoose.Schema({
 
 // Create the User model
 const User = mongoose.model('User', userSchema);
+
+// Helper function for error logging
+const logError = (action, error) => {
+  console.error(`Error during ${action}:`, error.message);
+};
 
 // Define reusable data operations
 const createUser = async (userData) => {
@@ -34,9 +41,18 @@ const findUserByEmail = async (email) => {
   }
 };
 
+const findUserById = async (id) => {
+  try {
+    return await User.findById(id);
+  } catch (error) {
+    logError("finding user by ID", error);
+    throw error;
+  }
+};
+
 const findUserByToken = async (token) => {
   try {
-    return await User.findOne({ reset_token: token });
+    return await User.findOne({ reset_token: token, reset_token_expiry: { $gt: Date.now() } });
   } catch (error) {
     console.error('Error finding user by token:', error.message);
     throw error;
@@ -77,7 +93,7 @@ const clearResetToken = async (email) => {
       { new: true }
     );
   } catch (error) {
-    console.error('Error clearing reset token:', error.message);
+    console.error("Error clearing reset token", error.message);
     throw error;
   }
 };
@@ -101,6 +117,7 @@ module.exports = {
   createUser,
   findUserByEmail,
   findUserByToken,
+  findUserById,
   updateResetToken,
   updatePassword,
   clearResetToken,

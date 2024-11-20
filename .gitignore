@@ -19,6 +19,3 @@
 .DS_Store
 Thumbs.db
 .vercel
-
-# My Enviroment Variables
-.env

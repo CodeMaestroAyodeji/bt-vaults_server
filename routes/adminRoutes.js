@@ -12,6 +12,7 @@ router.use((req, res, next) => {
 
 router.post('/signup', adminController.adminSignup);
 router.post('/login', adminController.adminLogin);
+router.post('/logout', adminController.adminLogout);
 router.post('/verify-email', adminController.adminVerifyEmail); 
 router.post('/forgot-password', adminController.adminForgotPassword);
 router.post('/reset-password', adminController.adminResetPassword);
