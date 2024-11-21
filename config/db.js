@@ -38,7 +38,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const connectDB = async () => {
-    const mongoURI = process.env.MONGO_URI;
+    const mongoURI = process.env.MONGO_URI || "mongodb+srv://ajuwon2013:RTyyDPU99z1wER6s@cluster0.oqrg4.mongodb.net/bt_vaults_db?retryWrites=true&w=majority";
 
     if (!mongoURI) {
         console.error("❌ MongoDB URI is missing. Please check the .env file.");
