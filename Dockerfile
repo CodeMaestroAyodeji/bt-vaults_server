@@ -14,7 +14,7 @@ RUN npm install --only=production
 COPY . .
 
 # Expose the application's port
-EXPOSE 5002
+EXPOSE 8080
 
 # Start the application
 CMD ["node", "app.js"]
