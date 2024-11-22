@@ -47,6 +47,8 @@ const sendVerificationEmail = async (email, verificationCode) => {
     <h1>Verify Your Email Address</h1>
     <p>Thank you for signing up! Please verify your email using the code below:</p>
     <h2 style="color: #FFC107;">${verificationCode}</h2>
+    <p>You can also copy the above code and follow the below to activate your account:
+    <a href="${FRONTEND_URL}/bt-vaults/user/verify-email">Verify Account</a>
     <p>If you did not request this, please ignore this email.</p>
   `;
   await sendEmail(email, 'Email Verification - Bt-Vaults', htmlContent);

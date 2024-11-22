@@ -45,6 +45,8 @@ const sendVerificationEmail = async (email, verificationCode) => {
     <h1>Verify Your Email Address</h1>
     <p>Thank you for signing up! Please verify your email using the code below:</p>
     <h2 style="color: #FFC107;">${verificationCode}</h2>
+    <p>You can also copy the above code and follow the below to activate your account:
+    <a href="${FRONTEND_URL}/bt-vaults/admin/verify-email">Verify Account</a>
     <p>If you did not request this, please ignore this email.</p>
   `;
   await sendEmail(email, 'Email Verification - Bt-Vaults', htmlContent);
@@ -54,7 +56,7 @@ const sendVerificationEmail = async (email, verificationCode) => {
 const sendVerificationSuccessEmail = async (email) => {
   const htmlContent = `
     <h1>Congratulations!</h1>
-    <p>Your email has been successfully verified. You can now log in to your account as an Admin:</p>
+    <p>Your account has been successfully verified. You can now log in to your account as an Admin:</p>
     <a href="${FRONTEND_URL}/bt-vaults/admin/login">Login Here</a>
     <p>Thank you for verifying your email. Enjoy our services!</p>
   `;
@@ -64,6 +66,7 @@ const sendVerificationSuccessEmail = async (email) => {
 // Password Reset Request
 const sendResetPasswordEmail = async (email, resetToken) => {
   const resetUrl = `${FRONTEND_URL}/bt-vaults/admin/reset-password?token=${resetToken}`;
+  console.log('Reset URL:', resetUrl); // Log for debugging
   const htmlContent = `
     <h1>Password Reset Request</h1>
     <p>We received a request to reset your password. Click the link below to proceed:</p>
@@ -72,6 +75,8 @@ const sendResetPasswordEmail = async (email, resetToken) => {
   `;
   await sendEmail(email, 'Password Reset - Bt-Vaults', htmlContent);
 };
+
+
 
 // Password Reset Success
 const sendPasswordResetSuccessEmail = async (email) => {
