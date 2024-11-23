@@ -1,7 +1,7 @@
 const express = require('express');
 const upload = require('../middleware/fileUploadMiddleware');
 const validateMagnetLink = require('../utils/magnetLinkValidator');
-const { parseMagnet } = require('../controllers/torrentControllers/torrentController');
+const { parseMagnet, searchTorrents } = require('../controllers/torrents/torrentController');
 const router = express.Router();
 
 
@@ -33,6 +33,7 @@ router.post('/parse', (req, res) => {
 });
 
 router.post('/magnet', parseMagnet);
+router.get('/search', searchTorrents);
 
 
 module.exports = router;
