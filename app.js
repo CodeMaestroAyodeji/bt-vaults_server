@@ -1,15 +1,22 @@
+// app.js
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
+const corsMiddleware = require('./utils/corsConfig');
+
+// Routes
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const torrentRoutes = require('./routes/torrentRoutes');
+
+
 require('dotenv').config();
 
 const app = express();
 
-// Connect to MongoDB
 (async () => {
     try {
         await connectDB();
@@ -20,50 +27,36 @@ const app = express();
     }
 })();
 
-// Security Middleware
 app.use(helmet());
 
-// Improved CORS Configuration
-const corsOptions = {
-    origin: process.env.NODE_ENV === 'production'
-        ? process.env.FRONTEND_PROD_URL
-        : process.env.FRONTEND_DEV_URL,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-};
-app.use(cors(corsOptions));
-
-// Rate Limiting
 const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 15 * 60 * 1000, 
     max: 100,
 });
 app.use(apiLimiter);
 
-// Handle Preflight Requests
-app.options('*', cors(corsOptions));
+app.use(corsMiddleware);
 
-// Middleware for parsing JSON requests
+
 app.use(express.json({ limit: '1mb' }));
 
-// Define API routes
 app.use('/api/auth/user', userRoutes);
 app.use('/api/auth/admin', adminRoutes);
+app.use('/api/torrent', torrentRoutes);
 
-// Error Handling Middleware
+
+app.options('*', corsMiddleware);
+
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Internal Server Error' });
 });
 
-// Handle Unhandled Promise Rejections
 process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err.message);
     process.exit(1);
 });
 
-// Start the server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);

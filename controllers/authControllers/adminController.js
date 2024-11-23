@@ -8,14 +8,14 @@ const {
   updatePassword,
   updateResetToken,
   verifyUser,
-} = require('../models/userModel');
+} = require('../../models/userModel');
 const {
   sendVerificationEmail,
   sendVerificationSuccessEmail,
   sendResetPasswordEmail,
   sendPasswordResetSuccessEmail,
   sendSignupConfirmationEmail,
-} = require('../utils/adminEmailService');
+} = require('../../utils/adminEmailService');
 
 // Admin Signup
 const adminSignup = async (req, res) => {

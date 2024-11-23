@@ -1,10 +1,11 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-const FRONTEND_URL =
-  process.env.NODE_ENV === 'production'
-    ? process.env.FRONTEND_PROD_URL
-    : process.env.FRONTEND_DEV_URL;
+// Get the correct frontend URL based on the environment
+const FRONTEND_URL = "https://bt-vaults-client.vercel.app/";
+  // process.env.NODE_ENV === 'production'
+  //   ? process.env.FRONTEND_PROD_URL
+  //   : process.env.FRONTEND_DEV_URL;
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',

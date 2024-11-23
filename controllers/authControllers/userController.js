@@ -6,7 +6,7 @@ const {
   verifyUser,
   findUserById,
   clearResetToken,
-} = require("../models/userModel");
+} = require("../../models/userModel");
 
 const {
   sendVerificationEmail,
@@ -14,7 +14,7 @@ const {
   sendResetPasswordEmail,
   sendPasswordResetSuccessEmail,
   sendWelcomeEmail,
-} = require("../utils/userEmailService");
+} = require("../../utils/userEmailService");
 
 // Centralized Error Handling Function
 const handleError = (res, error, message = 'Something went wrong') => {
