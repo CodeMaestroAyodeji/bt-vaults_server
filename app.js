@@ -42,7 +42,7 @@ app.use(express.json({ limit: '1mb' }));
 
 app.use('/api/auth/user', userRoutes);
 app.use('/api/auth/admin', adminRoutes);
-app.use('/api/torrent', torrentRoutes);
+app.use('/api/torrents', torrentRoutes);
 
 
 app.options('*', corsMiddleware);

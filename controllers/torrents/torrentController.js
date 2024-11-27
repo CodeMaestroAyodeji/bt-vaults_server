@@ -1,70 +1,87 @@
-const parseMagnetLink = require('../../utils/magnetParser'); // Ensure this path is correct
+const fs = require('fs');
+const crypto = require('crypto');
+const Torrent = require('../../models/Torrent');  // Keep the require for your model
 
+let WebTorrent;  // To store the WebTorrent module
 
-/**
- * Handles magnet link parsing.
- * @param {object} req - The request object.
- * @param {object} res - The response object.
- */
-const parseMagnet = async (req, res) => {
-    const { magnet } = req.body;
+// Dynamically import WebTorrent
+(async () => {
+    WebTorrent = (await import('webtorrent')).default;  // Accessing the default export
+})();
 
-    if (!magnet) {
-        return res.status(400).json({ message: "Magnet link is required" });
-    }
-
-    try {
-        const parsedDetails = parseMagnetLink(magnet);
-        res.status(200).json({
-            message: "Magnet link parsed successfully",
-            data: parsedDetails,
+// Function to calculate the infoHash from the torrent file
+const calculateInfoHash = (filePath) => {
+    return new Promise((resolve, reject) => {
+        if (!WebTorrent) {
+            return reject('WebTorrent not loaded yet');
+        }
+        const client = new WebTorrent();  // Correct instantiation of WebTorrent client
+        client.add(filePath, (torrent) => {
+            resolve(torrent.infoHash);  // Get the infoHash directly from WebTorrent
         });
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
-};
-
-/**
- * Mock torrent data for demonstration purposes.
- */
-const mockTorrents = Array.from({ length: 50 }, (_, i) => ({
-    id: i + 1,
-    name: `Torrent File ${i + 1}`,
-    size: `${(Math.random() * 10 + 1).toFixed(2)} GB`,
-    seeders: Math.floor(Math.random() * 1000),
-    leechers: Math.floor(Math.random() * 500),
-}));
-
-/**
- * Handles torrent search with pagination.
- * @param {object} req - The request object.
- * @param {object} res - The response object.
- */
-const searchTorrents = (req, res) => {
-    const { query = '', page = 1, limit = 10 } = req.query;
-
-    // Filter torrents by name
-    const filteredTorrents = mockTorrents.filter((torrent) =>
-        torrent.name.toLowerCase().includes(query.toLowerCase())
-    );
-
-    // Pagination logic
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + parseInt(limit);
-    const paginatedTorrents = filteredTorrents.slice(startIndex, endIndex);
-
-    res.status(200).json({
-        message: "Search results fetched successfully",
-        data: paginatedTorrents,
-        totalResults: filteredTorrents.length,
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(filteredTorrents.length / limit),
     });
 };
 
-// Export the functions as part of the module
-module.exports = {
-    parseMagnet,
-    searchTorrents,
+// Function to upload a torrent
+const uploadTorrent = async (req, res) => {
+    try {
+        const { seeders, leechers } = req.body;
+
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        const infoHash = await calculateInfoHash(req.file.path);
+        console.log('Calculated InfoHash:', infoHash);
+
+        const torrent = new Torrent({
+            name: req.file.originalname,
+            filePath: req.file.path,
+            size: `${(req.file.size / 1024).toFixed(2)} KB`,
+            seeders: seeders || 0,
+            leechers: leechers || 0,
+            infoHash,  // Store the infoHash in the database
+        });
+
+        await torrent.save();
+
+        res.status(201).json({
+            message: 'Torrent uploaded successfully',
+            torrent,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
 };
 
+// Function to get all torrents
+const getTorrents = async (req, res) => {
+    try {
+        const torrents = await Torrent.find().sort({ uploadDate: -1 });
+        res.status(200).json({ torrents });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Function to get a single torrent by ID
+const getTorrentById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find the torrent by ID
+        const torrent = await Torrent.findById(id);
+
+        if (!torrent) {
+            return res.status(404).json({ message: 'Torrent not found' });
+        }
+
+        res.status(200).json({ torrent });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+module.exports = { uploadTorrent, getTorrents, getTorrentById };

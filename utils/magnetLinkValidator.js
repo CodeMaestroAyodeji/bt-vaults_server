@@ -1,6 +1,5 @@
-const magnetUri = require('magnet-uri'); // Ensure this is correct
+const magnetUri = require('magnet-uri');
 
-// Validate Magnet Links
 const validateMagnetLink = (magnetLink) => {
     try {
         const parsed = magnetUri.parse(magnetLink);
@@ -10,4 +9,4 @@ const validateMagnetLink = (magnetLink) => {
     }
 };
 
-module.exports = validateMagnetLink; // Export using CommonJS syntax
+module.exports = validateMagnetLink;

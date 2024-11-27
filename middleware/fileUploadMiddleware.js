@@ -1,25 +1,19 @@
 const multer = require('multer');
-const fs = require('fs');
 const path = require('path');
 
-// Ensure Uploads Directory Exists
-const uploadPath = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadPath)) {
-    fs.mkdirSync(uploadPath, { recursive: true });
-}
-
-// Configure Multer Storage
+// Define storage configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, '../uploads')); // Uploads directory
+        const uploadDir = path.join(__dirname, '../uploads');
+        cb(null, uploadDir); // Set upload directory
     },
     filename: (req, file, cb) => {
-        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-        cb(null, `${uniqueSuffix}-${file.originalname}`);
+        const uniqueName = `${Date.now()}-${file.originalname}`;
+        cb(null, uniqueName); // Use a unique name for the file
     },
 });
 
-// File Filter for .torrent files
+// Validate only `.torrent` files
 const fileFilter = (req, file, cb) => {
     if (file.mimetype === 'application/x-bittorrent') {
         cb(null, true);
@@ -29,6 +23,21 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Configure Multer
-const upload = multer({ storage, fileFilter });
+const upload = multer({
+    storage,
+    fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 },
+}).single('file'); // Ensure 'file' matches the form-data key
+
+router.post('/upload', (req, res, next) => {
+    upload(req, res, (err) => {
+        if (err) {
+            console.error('Error in Multer:', err.message); // Log Multer errors
+            return res.status(400).json({ message: err.message });
+        }
+        console.log('File uploaded:', req.file); // Log the file object
+        next();
+    });
+}, uploadTorrent);
 
 module.exports = upload;
