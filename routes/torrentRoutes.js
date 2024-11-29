@@ -1,23 +1,16 @@
-const express = require('express');
-const multer = require('multer');
-const { uploadTorrent, getTorrents, getTorrentById } = require('../controllers/torrents/torrentController.js');
+// routes/torrentRoutes.js  
+const express = require('express');  
+const { addTorrentFromMagnet } = require('../controllers/torrents/addTorrentFromMagnet');  
+const { searchTorrents } = require('../controllers/torrents/searchTorrents');  
+const { uploadTorrent } = require('../controllers/torrents/uploadTorrent');  
+const { uploadService } = require('../services/uploadService');  
+const { validateSearchQuery, checkValidationResult } = require('../utils/validateSearchQuery');  
 
-const router = express.Router();
+const router = express.Router();  
 
-// Set up multer for file uploads
-const upload = multer({
-    dest: 'uploads/', // Directory to store uploaded files
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype === 'application/x-bittorrent') {
-            cb(null, true);
-        } else {
-            cb(new Error('Invalid file type. Only .torrent files are allowed.'));
-        }
-    },
-});
+// Route to add torrent via magnet link  
+router.post('/magnet', addTorrentFromMagnet);  
+router.post('/upload', uploadService.single('torrentFile'), uploadTorrent);  
+router.get('/search', validateSearchQuery, checkValidationResult, searchTorrents);  
 
-router.post('/upload', upload.single('torrentFile'), uploadTorrent);
-router.get('/', getTorrents);
-router.get('/:id', getTorrentById);  // Route to get a torrent by its ID
-
-module.exports = router;  // CommonJS export
+module.exports = router;

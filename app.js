@@ -2,6 +2,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
@@ -15,7 +16,9 @@ const torrentRoutes = require('./routes/torrentRoutes');
 
 require('dotenv').config();
 
+
 const app = express();
+app.use(bodyParser.json());
 
 (async () => {
     try {
