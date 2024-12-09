@@ -1,25 +1,21 @@
-// app.js
-
 const express = require('express');
-const cors = require('cors');
+const http = require('http');
+const socketIo = require('socket.io');
+const corsMiddleware = require('./utils/corsConfig'); // Your CORS configuration
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
-const corsMiddleware = require('./utils/corsConfig');
-
-// Routes
-const userRoutes = require('./routes/userRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const torrentRoutes = require('./routes/torrentRoutes');
-
+const { setIo } = require('./socket');
 
 require('dotenv').config();
 
-
 const app = express();
-app.use(bodyParser.json());
+const server = http.createServer(app);
+const io = socketIo(server);
+setIo(io);
 
+// Connect to MongoDB
 (async () => {
     try {
         await connectDB();
@@ -30,37 +26,50 @@ app.use(bodyParser.json());
     }
 })();
 
-app.use(helmet());
+// Middleware setup
+app.use(corsMiddleware); // Enable CORS
+app.use(bodyParser.json()); // Parse JSON body
+app.use(helmet()); // Secure headers
 
+// Rate limiter
 const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, 
-    max: 100,
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
 });
-app.use(apiLimiter);
+app.use(apiLimiter); // Apply rate limiter
 
-app.use(corsMiddleware);
+// Logging incoming requests
+app.use((req, res, next) => {
+    console.log(`${req.method} request for '${req.url}'`);
+    next();
+});
 
+// Routes
+const userRoutes = require('./routes/userRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const torrentRoutes = require('./routes/routes/torrentRoutes');
 
-app.use(express.json({ limit: '1mb' }));
-
-app.use('/api/auth/user', userRoutes);
-app.use('/api/auth/admin', adminRoutes);
+app.use('/auth/user', userRoutes);
+app.use('/auth/admin', adminRoutes);
 app.use('/api/torrents', torrentRoutes);
 
-
+// Handle OPTIONS requests for preflight checks
 app.options('*', corsMiddleware);
 
+// Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Internal Server Error' });
 });
 
+// Handle unhandled rejections
 process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err.message);
     process.exit(1);
 });
 
+// Start server
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });

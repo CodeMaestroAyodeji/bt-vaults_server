@@ -12,6 +12,7 @@ const corsOptions = {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error(`CORS not allowed for this origin: ${origin}`); // Log the disallowed origin
       callback(new Error('CORS not allowed for this origin.'));
     }
   },

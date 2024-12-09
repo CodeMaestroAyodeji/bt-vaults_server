@@ -1,16 +1,25 @@
+// models/Torrent.js
+
 const mongoose = require('mongoose');
 
 const torrentSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    filePath: { type: String }, // Made optional
-    size: { type: Number, required: true }, // In bytes
+    magnet_link: { type: String, required: true },
     infoHash: { type: String, required: true },
-    seeders: { type: Number, default: 0 },
-    leechers: { type: Number, default: 0 },
-    status: { type: String, enum: ['queued', 'downloading', 'paused', 'stopped', 'completed'], default: 'queued' },
-    progress: { type: Number, default: 0 }, // Progress percentage
-    downloadSpeed: { type: Number, default: 0 }, // Bytes per second
-    uploadDate: { type: Date, default: Date.now },
+    size: { type: Number, required: true }, // This line is essential
+    seeds: { type: Number, required: true },
+    leechers: { type: Number, required: true },
+    created_at: { type: Date, default: Date.now },
+    download_status: { type: String, maxlength: 50 },
+    progress: { type: Number, default: 0.00, min: 0.00, max: 100.00 },
+    download_speed: { type: Number, default: 0.0 },
+    time_remaining: { type: Number, default: 0 },
+    last_updated: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Torrent', torrentSchema);
+
+// Create the model
+const TorrentModel = mongoose.model('Torrent', torrentSchema);
+
+module.exports = TorrentModel;
+
