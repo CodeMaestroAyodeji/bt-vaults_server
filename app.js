@@ -47,7 +47,7 @@ app.use((req, res, next) => {
 // Routes
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-const torrentRoutes = require('./routes/routes/torrentRoutes');
+const torrentRoutes = require('./routes/torrentRoutes');
 
 app.use('/auth/user', userRoutes);
 app.use('/auth/admin', adminRoutes);

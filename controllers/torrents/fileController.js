@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const Torrent = require('../../../models/Torrent'); // Ensure this path to your model is correct
+const Torrent = require('../../models/Torrent'); // Ensure this path to your model is correct
 const archiver = require('archiver');
 
 // Fetch all files with pagination

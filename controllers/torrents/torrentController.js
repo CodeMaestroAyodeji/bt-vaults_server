@@ -1,5 +1,5 @@
 const path = require('path');
-const { getIo } = require('../../../socket');
+const { getIo } = require('../../socket');
 const {
     externalSearch,
     uploadTorrentFile,
@@ -9,7 +9,7 @@ const {
     resumeDownload,
     cancelDownload,
     updateDownloadStatus
-} = require('../../../services/services/torrentService');
+} = require('../../services/torrentService');
 
 // Search for torrents using an external API
 const searchTorrents = (req, res) => {

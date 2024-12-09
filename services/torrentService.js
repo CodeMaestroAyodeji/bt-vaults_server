@@ -5,8 +5,8 @@ const path = require('path');
 const NodeCache = require("node-cache");
 const myCache = new NodeCache();
 const axios = require('axios');
-const Torrent = require('../../models/Torrent');
-const { processTorrentFile } = require('../../utils/utils/fileUtils');
+const Torrent = require('../models/Torrent');
+const { processTorrentFile } = require('../utils/fileUtils');
 
 async function getWebTorrentClient() {  
     try {  

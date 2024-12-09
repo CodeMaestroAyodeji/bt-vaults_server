@@ -1,44 +1,47 @@
-// routes/torrentRoutes.js  
+const express = require('express');
+const {
+    searchTorrents,
+    uploadTorrent,
+    processMagnetLink,
+    startDownloadHandler,
+    pauseDownloadHandler,
+    resumeDownloadHandler,
+    cancelDownloadHandler,
+} = require('../controllers/torrents/torrentController');
+const { fetchFiles, deleteFile, downloadFile, zipFiles } = require('../controllers/torrents/fileController');
+const upload = require('../middleware/uploadMiddleware');
+const { getTorrentStatistics } = require('../controllers/statistics/torrentsStats');
+const { getIo } = require('../socket'); // Import the getIo method
 
-const express = require('express');  
-const { addTorrentFromMagnet } = require('../controllers/torrents/addTorrentFromMagnet');  
-const { searchTorrents } = require('../controllers/torrents/searchTorrents');  
-const { uploadTorrent } = require('../controllers/torrents/uploadTorrent');
-const { getSingleTorrent } = require('../controllers/torrents/getSingleTorrent');  
-const { getAllTorrents } = require('../controllers/torrents/getAllTorrents');
-const { downloadTorrent } = require('../controllers/torrents/downloadTorrent');
-const { pauseTorrent } = require('../controllers/torrents/pauseTorrent');  
-const { stopTorrent } = require('../controllers/torrents/stopTorrent');  
-const { deleteTorrent } = require('../controllers/torrents/deleteTorrent');
-const { zipTorrentFiles } = require('../controllers/torrents/zipTorrentFiles');
-const { downloadedFiles } = require('../controllers/torrents/downloadedFiles');
-const { unDownloadedFiles } = require('../controllers/torrents/unDownloadedFiles');
-const { uploadService } = require('../services/uploadService');  
-const { validateSearchQuery, checkValidationResult } = require('../utils/validateSearchQuery');  
-const { getDownloadingStatus } = require('../controllers/torrents/getDownloadingStatus');
-const { getNotDownloadingStatus } = require('../controllers/torrents/getNotDownloadingStatus');
+const router = express.Router();
+
+// External search
+router.get('/search', searchTorrents);
+
+// Upload torrent file
+router.post('/upload', upload.single('torrentFile'), uploadTorrent);
+
+// Magnet link processing
+router.post('/process-magnet', processMagnetLink);
+
+// Start download with io retrieved from the singleton
+router.post('/start-download', (req, res) => {
+    const io = getIo(); // Get the io instance
+    startDownloadHandler(req, res, io);
+});
+router.post('/pause-download', pauseDownloadHandler);
+router.post('/resume-download', resumeDownloadHandler);
+router.delete('/cancel-download', (req, res) => {
+    console.log('Received DELETE request:', req.body);
+});
+
+// File management
+router.get('/files', fetchFiles); // Fetch uploaded files
+router.delete('/files/:id', deleteFile); // Delete a file by ID
+router.get('/files/download/:id', downloadFile); // Download a file by ID
+router.post('/files/zip', zipFiles); // Zip and download multiple files
 
 
-
-const router = express.Router();  
-
-// Route to add torrent via magnet link  
-router.post('/magnet', addTorrentFromMagnet);  
-router.post('/upload', uploadService.single('torrentFile'), uploadTorrent);  
-router.get('/search', validateSearchQuery, checkValidationResult, searchTorrents);
-router.get('/', getAllTorrents);
-router.get('/:infoHash', getSingleTorrent);
-router.post('/:infoHash/download', downloadTorrent);
-router.delete('/:infoHash', deleteTorrent);
-router.post('/:infoHash/stop', stopTorrent);
-router.post('/:infoHash/pause', pauseTorrent);
-router.post('/zip', zipTorrentFiles);
-router.get('/downloading', downloadedFiles);
-
-
-router.get('/uncompleted', unDownloadedFiles);
-// Add routes for tracking the downloading and non-downloading torrents
-router.get('/downloading-status', getDownloadingStatus); // Track torrents with downloading status
-router.get('/not-downloading-status', getNotDownloadingStatus); // Track torrents without downloading status
+router.get('/statistics', getTorrentStatistics);
 
 module.exports = router;
